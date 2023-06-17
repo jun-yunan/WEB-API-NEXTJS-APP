@@ -4,10 +4,14 @@ const userAuthenticationMiddleware = (req, res, next) => {
     try {
         const authHeader = req.headers['authorization'];
         const accessToken = authHeader && authHeader.split(' ')[1];
+
+        const verifyToken = verifyJwt(accessToken);
+
         if (!authHeader || !verifyJwt(accessToken)) {
             return res.json({ error: 'unauthorized' });
         }
 
+        req.user = verifyToken;
         return next();
     } catch (error) {
         return res.json({ error });

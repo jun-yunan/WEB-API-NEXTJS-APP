@@ -11,6 +11,8 @@ const UserSchema = new Schema(
         image: { type: String },
         gender: { type: String },
         date: { type: String },
+        birthDay: { type: String },
+        avatar: { type: String },
         numberPhone: { type: String },
         address: { type: String },
     },

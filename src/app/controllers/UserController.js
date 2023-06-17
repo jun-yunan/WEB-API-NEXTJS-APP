@@ -2,6 +2,10 @@ const UserSchema = require('../models/UserSchema');
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const { signJwtAccessToken } = require('../../config/authConfig');
+const cloudinary = require('../../helper/imageUpload');
+const multer = require('multer');
+
+// const cloudinary = require('cloudinary');
 
 class UserController {
     //[GET] getAllUser
@@ -23,7 +27,11 @@ class UserController {
                     });
                 }
             }
-            return res.json({ message: 'Fail!!!', status: false, error });
+            return res.json({
+                message: 'Fail!!!',
+                status: false,
+                error: { message: error.message, stack: error.stack },
+            });
         }
     }
 
@@ -33,7 +41,7 @@ class UserController {
         try {
             if (!req.body) return res.status(400).json({ error: 'Data is missing' });
 
-            const { email, name, password } = req.body.data;
+            const { email, name, password } = req.body.data || req.body;
 
             const userExists = await UserSchema.exists({ email });
 
@@ -44,11 +52,13 @@ class UserController {
                 email,
                 name,
                 password: hashedPassword,
-                image: '',
+                birthDay: '',
+                avatar: '',
+                // image: '',
                 address: '',
                 gender: '',
                 username: '',
-                date: '',
+                // date: '',
                 numberPhone: '',
             });
             if (!user) return res.json({ error: 'Create account fail' });
@@ -70,7 +80,12 @@ class UserController {
                     });
                 }
             }
-            return res.json({ message: 'Create account fail!!!', status: false, error });
+            return res.json({
+                message: 'Create account fail!!!',
+                status: false,
+                error: { message: error.message, stack: error.stack },
+                request: req.body,
+            });
         }
     }
 
@@ -91,6 +106,7 @@ class UserController {
                 _id: user._id.toString(),
                 email: user.email,
                 name: user.name,
+                avatar: user.avatar,
             });
 
             if (!accessToken) return res.json({ error: 'Error access token generation', status: false });
@@ -100,7 +116,11 @@ class UserController {
                 _id: user._id.toString(),
                 email: user.email,
                 name: user.name,
-                image: user.image,
+                avatar: user.avatar,
+                address: user.address,
+                numberPhone: user.numberPhone,
+                gender: user.gender,
+                birthDay: user.birthDay,
                 accessToken,
             });
         } catch (error) {
@@ -114,13 +134,78 @@ class UserController {
                     });
                 }
             }
-            return res.json({ error, status: false });
+            return res.json({ error: { message: error.message, stack: error.stack }, status: false });
         }
     }
 
-    //[GET] /getUserById/:id
-    getUserById(req, res, next) {
-        return res.json({ message: 'fdsfsdf' });
+    //[GET] /user/:id
+    async getUserById(req, res, next) {
+        try {
+            const { _id } = req.params;
+
+            if (!_id) return res.json({ error: 'not found userId' });
+            const user = await UserSchema.findById(_id)
+                .select('name address numberPhone gender email birthDay avatar')
+                .lean()
+                .exec()
+                .catch((error) => res.json({ error, message: 'not found user!!!', status: false }));
+
+            return res.json({ message: 'find user by id successfully!!!', status: true, user });
+        } catch (error) {
+            return res.status(404).json({ error: 'catch', status: false });
+        }
+    }
+
+    //[POST] /user/profile/avatar
+    async uploadImage(req, res, next) {
+        const { _id } = req.user;
+
+        if (!_id) return res.json({ error: 'unauthorized' });
+
+        try {
+            const result = await cloudinary.uploader.upload(req.file.path, {
+                public_id: `${_id}_avatar`,
+                folder: 'avatar',
+            });
+            const { url: urlAvatar } = result;
+            const user = await UserSchema.findByIdAndUpdate(
+                _id,
+                { $set: { avatar: urlAvatar } },
+                { returnDocument: 'after' },
+            )
+                .lean()
+                .exec()
+                .catch((error) => res.json({ error, message: 'Update avatar fail', status: false }));
+            return res.json({ message: 'upload image successfully', result, user, request: req.body });
+        } catch (error) {
+            return res.json({ error: { message: error.message, stack: error.stack }, message: 'catch' });
+        }
+    }
+
+    //[PUT] /user/profile
+    async updateInfoProfile(req, res, next) {
+        const { _id } = req.user;
+
+        const { name, birthDay, address, numberPhone, gender } = req.body;
+
+        try {
+            const user = await UserSchema.findByIdAndUpdate(
+                _id,
+                {
+                    $set: { name, birthDay, address, numberPhone, gender },
+                },
+                { returnDocument: 'after' },
+            );
+            return res.json({ message: 'success', token: req.user, request: req.body, user });
+        } catch (error) {
+            console.error(error);
+            res.json({ error: { message: error.message, stack: error.stack } });
+        }
+    }
+
+    //[PUT] /users
+    async updateUser(req, res, next) {
+        res.json({ message: 'fdsfsdfdsfa', request: req.body || 'fdsfsd' });
     }
 }
 
