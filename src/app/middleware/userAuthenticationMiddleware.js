@@ -8,7 +8,7 @@ const userAuthenticationMiddleware = (req, res, next) => {
         const verifyToken = verifyJwt(accessToken);
 
         if (!authHeader || !verifyJwt(accessToken)) {
-            return res.json({ error: 'unauthorized' });
+            return res.status(401).json({ error: 'unauthorized' });
         }
 
         req.user = verifyToken;

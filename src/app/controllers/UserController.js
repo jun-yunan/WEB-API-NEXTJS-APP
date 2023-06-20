@@ -176,7 +176,13 @@ class UserController {
                 .lean()
                 .exec()
                 .catch((error) => res.json({ error, message: 'Update avatar fail', status: false }));
-            return res.json({ message: 'upload image successfully', result, user, request: req.body });
+            return res.json({
+                message: 'upload image successfully',
+                result,
+                user,
+                request: req.body,
+                status: true,
+            });
         } catch (error) {
             return res.json({ error: { message: error.message, stack: error.stack }, message: 'catch' });
         }

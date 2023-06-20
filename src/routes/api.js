@@ -3,6 +3,7 @@ const router = express.Router();
 
 const productController = require('../app/controllers/ProductController');
 const userController = require('../app/controllers/UserController');
+const PostController = require('../app/controllers/PostController');
 
 const userAuthenticationMiddleware = require('../app/middleware/userAuthenticationMiddleware');
 const multerUploadMiddleware = require('../app/middleware/multerUploadMiddleware');
@@ -30,5 +31,18 @@ router.get('/users/:_id', userController.getUserById);
 
 // PRODUCT
 router.get('/products', productController.getProducts);
+
+// POST
+
+router.post(
+    '/users/:_id/posts',
+    userAuthenticationMiddleware,
+    multerUploadMiddleware.single('image'),
+    PostController.createPost,
+);
+
+router.get('/users/:_id/posts', userAuthenticationMiddleware, PostController.getPost);
+
+router.delete('/users/:userId/posts/:postId', userAuthenticationMiddleware, PostController.deletePost);
 
 module.exports = router;
