@@ -10,8 +10,8 @@ const multerUploadMiddleware = require('../app/middleware/multerUploadMiddleware
 
 //  USER
 router.get('/getAllUser', userAuthenticationMiddleware, userController.getAllUser);
-router.post('/signup', userController.signup);
-router.post('/signIn', userController.signIn);
+router.post('/users/sign-up', userController.signup);
+router.post('/users/sign-in', userController.login);
 router.post(
     '/users/profile/avatar',
     userAuthenticationMiddleware,

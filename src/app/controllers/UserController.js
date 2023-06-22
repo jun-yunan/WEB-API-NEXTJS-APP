@@ -90,7 +90,7 @@ class UserController {
     }
 
     //[POST] signIn
-    async signIn(req, res, next) {
+    async login(req, res, next) {
         try {
             if (!req.body) return res.json({ error: 'Data is missing', status: false });
 

@@ -25,6 +25,7 @@ class PostController {
                 );
 
                 return res.status(201).json({
+                    status: true,
                     message: 'create post success!!!',
                     request: req.body,
                     result,
@@ -43,6 +44,7 @@ class PostController {
 
             return res.status(201).json({
                 message: 'create post success!!!',
+                status: true,
                 request: req.body,
                 post,
                 auth,
@@ -60,8 +62,12 @@ class PostController {
         try {
             const { _id } = req.params;
 
-            const posts = await PostSchema.find({ author: _id }).populate('author', 'name avatar').lean();
-            res.status(200).json({ request: req.params, message: 'success', posts });
+            const posts = await PostSchema.find({ author: _id })
+                .sort({ createdAt: -1 })
+                .populate('author', 'name avatar')
+                .lean();
+
+            return res.status(200).json({ request: req.params, message: 'success', posts });
         } catch (error) {
             return res.status(500).json({ error: error.message });
         }
