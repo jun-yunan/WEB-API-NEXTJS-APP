@@ -87,13 +87,18 @@ class PostController {
         try {
             const { postId, userId } = req.params;
 
-            const [userExists, post] = await Promise.all([
+            const [userExists, deletePostUser, post] = await Promise.all([
                 UserSchema.exists({ _id: userId }).exec(),
+                UserSchema.findByIdAndUpdate(userId, { $pull: { posts: postId } }).exec(),
                 PostSchema.findByIdAndDelete(postId).exec(),
             ]);
 
             if (!userExists) {
                 return res.status(404).json({ message: 'not found account', status: false });
+            }
+
+            if (!deletePostUser) {
+                return res.status(404).json({ message: 'delete user post fail!!!' });
             }
 
             if (!post) {

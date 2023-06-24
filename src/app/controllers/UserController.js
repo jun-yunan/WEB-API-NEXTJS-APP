@@ -303,6 +303,24 @@ class UserController {
             return res.status(500).json({ error: error.message });
         }
     }
+
+    async getAllPost(req, res, next) {
+        const { userId } = req.params;
+
+        await UserSchema.exists({ _id: userId })
+            .exec()
+            .catch((error) => res.status(404).json({ error, message: 'not found user!!!' }));
+
+        try {
+            const posts = await UserSchema.findById(userId).populate('posts').lean().exec();
+
+            if (!posts) return res.status(404).json({ error: 'not found posts' });
+
+            return res.status(200).json({ message: 'get all post successfully!!!', posts });
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
 }
 
 module.exports = new UserController();

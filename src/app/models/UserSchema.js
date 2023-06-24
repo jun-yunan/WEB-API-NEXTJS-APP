@@ -22,7 +22,7 @@ const UserSchema = new Schema(
             social: { type: String },
             interests: { type: String },
         },
-        posts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'posts' }],
+        posts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }],
         coverImage: { type: String },
     },
     { timestamps: true },
