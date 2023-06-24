@@ -15,6 +15,15 @@ const UserSchema = new Schema(
         avatar: { type: String },
         numberPhone: { type: String },
         address: { type: String },
+        introduce: {
+            studying: { type: String },
+            living: { type: String },
+            work: { type: String },
+            social: { type: String },
+            interests: { type: String },
+        },
+        posts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'posts' }],
+        coverImage: { type: String },
     },
     { timestamps: true },
 );

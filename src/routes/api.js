@@ -7,6 +7,7 @@ const PostController = require('../app/controllers/PostController');
 
 const userAuthenticationMiddleware = require('../app/middleware/userAuthenticationMiddleware');
 const multerUploadMiddleware = require('../app/middleware/multerUploadMiddleware');
+const UserController = require('../app/controllers/UserController');
 
 //  USER
 router.get('/getAllUser', userAuthenticationMiddleware, userController.getAllUser);
@@ -18,6 +19,14 @@ router.post(
     multerUploadMiddleware.single('avatar'),
     userController.uploadImage,
 );
+router.post(
+    '/users/:userId/profile/cover-image',
+    userAuthenticationMiddleware,
+    multerUploadMiddleware.single('coverImage'),
+    UserController.updateCoverImage,
+);
+router.post('/users/:userId/profile/introduce', userAuthenticationMiddleware, UserController.createIntroduce);
+router.get('/users/:userId/profile/introduce', userAuthenticationMiddleware, UserController.getIntroduce);
 
 router.put(
     '/users/profile/avatar',
@@ -34,6 +43,7 @@ router.get('/products', productController.getProducts);
 
 // POST
 
+router.get('/users/:userId/profile/images', PostController.getImagesProfileById);
 router.post(
     '/users/:_id/posts',
     userAuthenticationMiddleware,
@@ -41,7 +51,7 @@ router.post(
     PostController.createPost,
 );
 
-router.get('/users/:_id/posts', userAuthenticationMiddleware, PostController.getPost);
+router.get('/users/:_id/posts', userAuthenticationMiddleware, PostController.getPosts);
 
 router.delete('/users/:userId/posts/:postId', userAuthenticationMiddleware, PostController.deletePost);
 

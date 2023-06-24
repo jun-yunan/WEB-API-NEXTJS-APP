@@ -145,7 +145,7 @@ class UserController {
 
             if (!_id) return res.json({ error: 'not found userId' });
             const user = await UserSchema.findById(_id)
-                .select('name address numberPhone gender email birthDay avatar')
+                .select('name address numberPhone gender email birthDay avatar coverImage')
                 .lean()
                 .exec()
                 .catch((error) => res.json({ error, message: 'not found user!!!', status: false }));
@@ -212,6 +212,96 @@ class UserController {
     //[PUT] /users
     async updateUser(req, res, next) {
         res.json({ message: 'fdsfsdfdsfa', request: req.body || 'fdsfsd' });
+    }
+
+    //[POST] /users/:userId/profile/introduce
+
+    async createIntroduce(req, res, next) {
+        if (!req.body) return res.status(400).json({ error: 'Data is missing' });
+        const { userId } = req.params;
+
+        try {
+            const introduce = await UserSchema.findByIdAndUpdate(
+                userId,
+                { $set: { introduce: req.body } },
+                { returnDocument: 'after' },
+            )
+                .lean()
+                .exec()
+                .catch((error) =>
+                    res.status(400).json({ error, message: 'create introduce fail!!!', status: false }),
+                );
+            return res.json({
+                message: 'create introduce successfully!!!',
+                request: req.body,
+                introduce,
+                status: true,
+            });
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+
+    //[POST] /users/:userId/profile/introduce
+    async getIntroduce(req, res, next) {
+        const { userId } = req.params;
+
+        try {
+            const introduce = await UserSchema.findById(userId, 'introduce')
+                .lean()
+                .exec()
+                .catch((error) =>
+                    res.status(404).json({ error, message: 'not found introduce', status: false }),
+                );
+
+            return res.status(200).json({
+                ...introduce,
+                message: 'get introduce successfully!!!',
+                status: true,
+            });
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+
+    //[POST]
+
+    async updateCoverImage(req, res, next) {
+        const { userId } = req.params;
+        if (!userId && !req.file) return res.status(400).json({ error: 'Data is missing' });
+
+        try {
+            const result = await cloudinary.uploader.upload(req.file.path, {
+                public_id: `${userId}_coverImage`,
+                folder: 'coverImage',
+            });
+            if (!result) return res.status(409).json({ error: 'save cover image fail!!!' });
+            const { url } = result;
+
+            const coverImage = await UserSchema.findByIdAndUpdate(
+                userId,
+                { $set: { coverImage: url } },
+                { returnDocument: 'after' },
+            )
+                .select()
+                .lean()
+                .exec()
+                .catch((error) =>
+                    res
+                        .status(404)
+                        .json({ error, message: 'User does not exist or save fail!!', status: false }),
+                );
+
+            return res.json({
+                message: 'successfully!!!',
+                request: req.file,
+                userId,
+                coverImage,
+                status: true,
+            });
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
     }
 }
 
