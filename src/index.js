@@ -6,9 +6,11 @@ const cors = require('cors');
 const route = require('./routes');
 const handlebars = require('express-handlebars').engine;
 const database = require('./config/databaseConfig');
+const cookieParser = require('cookie-parser');
 
 const app = express();
-app.use(cors());
+app.use(cors({ credentials: true }));
+app.use(cookieParser());
 database.connect();
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json({ limit: '50mb' }));

@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const ProductSchema = require('../models/ProductSchema');
+const Product = require('../models/ProductSchema');
 
 class ProductController {
     async getProducts(req, res, next) {
@@ -10,7 +10,7 @@ class ProductController {
 
             const skipAmount = (page - 1) * limit;
 
-            const products = await ProductSchema.find()
+            const products = await Product.find()
                 .skip(skipAmount)
                 .limit(limit)
                 .select('_id nameProduct description price image');

@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const PostSchema = require('../models/PostSchema');
+const Post = require('../models/PostSchema');
 const cloudinary = require('../../helper/imageUpload');
 const UserSchema = require('../models/UserSchema');
 
@@ -11,11 +11,11 @@ class PostController {
 
             if (req.file?.path) {
                 const result = await cloudinary.uploader.upload(req.file.path, {
-                    public_id: `${_id}_image`,
+                    // public_id: `${_id}_image`,
                     folder: 'posts',
                 });
 
-                const post = await PostSchema.create({
+                const post = await Post.create({
                     author: _id,
                     content: data,
                     title: '',
@@ -38,11 +38,11 @@ class PostController {
                 });
             }
 
-            const post = await PostSchema.create({ author: _id, content: data, image: '', title: '' });
+            const post = await Post.create({ author: _id, content: data, image: '', title: '' });
 
             await UserSchema.findOneAndUpdate({ _id: _id }, { $push: { posts: post._id } }, { new: true });
 
-            const auth = await PostSchema.find()
+            const auth = await Post.find()
                 .populate('author', 'name avatar email numberPhone gender address')
                 .lean()
                 .exec();
@@ -66,7 +66,7 @@ class PostController {
         try {
             const { _id } = req.params;
 
-            const posts = await PostSchema.find({ author: _id })
+            const posts = await Post.find({ author: _id })
                 .sort({ createdAt: -1 })
                 .select('title content createdAt image')
                 .populate({
@@ -90,7 +90,7 @@ class PostController {
             const [userExists, deletePostUser, post] = await Promise.all([
                 UserSchema.exists({ _id: userId }).exec(),
                 UserSchema.findByIdAndUpdate(userId, { $pull: { posts: postId } }).exec(),
-                PostSchema.findByIdAndDelete(postId).exec(),
+                Post.findByIdAndDelete(postId).exec(),
             ]);
 
             if (!userExists) {
@@ -119,7 +119,7 @@ class PostController {
         }
 
         try {
-            const imagesProfile = await PostSchema.find({ author: userId })
+            const imagesProfile = await Post.find({ author: userId })
                 .select('image')
                 .populate({
                     path: 'author',
@@ -139,6 +139,83 @@ class PostController {
                 imagesProfile,
                 status: true,
             });
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+
+    //[GET] /users/:userId/posts/:postId
+    async getPostById(req, res, next) {
+        const { userId, postId } = req.params;
+
+        try {
+            const [userExists, post] = await Promise.all([
+                UserSchema.exists({ _id: userId }),
+                await Post.findById(postId).select('content image').lean(),
+            ]);
+
+            if (!userExists) {
+                return res.status(404).json({ message: 'not found user!!!' });
+            }
+
+            return res.json({
+                message: 'find by id post successfully',
+                params: req.params,
+                userExists,
+                post,
+            });
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+
+    //[POST] /users/:userId/posts/:postId
+    async updatePost(req, res, next) {
+        const { userId, postId } = req.params;
+        const { content } = req.body;
+
+        await UserSchema.exists({ _id: userId })
+            .exec()
+            .catch((error) => res.status(404).json({ error, message: 'not found user' }));
+
+        try {
+            if (req?.file) {
+                const uploadImage = await cloudinary.uploader.upload(req.file.path, {
+                    // public_id: `${userId}_image`,
+                    folder: 'posts',
+                });
+
+                if (!uploadImage) return res.status(404).json({ message: 'upload image fail!!!' });
+                const { url } = uploadImage;
+
+                const post = await Post.findByIdAndUpdate(
+                    postId,
+                    { $set: { content, image: url } },
+                    { returnDocument: 'after' },
+                )
+                    .lean()
+                    .exec();
+
+                if (!post) {
+                    return res.status(404).json({ message: 'Update post fail!!!' });
+                }
+
+                return res.status(201).json({ message: 'update post successfully!!!', uploadImage, post });
+            }
+
+            const post = await Post.findByIdAndUpdate(
+                postId,
+                { $set: { content } },
+                { returnDocument: 'after' },
+            )
+                .lean()
+                .exec();
+
+            if (!post) {
+                res.status(404).json({ message: 'Update post fail!!!' });
+            }
+
+            return res.status(201).json({ message: 'Update post successfully!!!', post });
         } catch (error) {
             return res.status(500).json({ error: error.message });
         }

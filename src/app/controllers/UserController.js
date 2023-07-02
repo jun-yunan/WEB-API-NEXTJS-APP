@@ -1,4 +1,4 @@
-const UserSchema = require('../models/UserSchema');
+const User = require('../models/UserSchema');
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const { signJwtAccessToken } = require('../../config/authConfig');
@@ -11,7 +11,7 @@ class UserController {
     //[GET] getAllUser
     async getAllUser(req, res, next) {
         try {
-            const user = await UserSchema.find({});
+            const user = await User.find({});
 
             if (!user) return;
 
@@ -43,12 +43,12 @@ class UserController {
 
             const { email, name, password } = req.body.data || req.body;
 
-            const userExists = await UserSchema.exists({ email });
+            const userExists = await User.exists({ email });
 
             if (userExists) return res.json({ error: 'User Already exists' });
             const hashedPassword = await bcrypt.hash(password, 10);
 
-            const user = await UserSchema.create({
+            const user = await User.create({
                 email,
                 name,
                 password: hashedPassword,
@@ -94,7 +94,7 @@ class UserController {
         try {
             if (!req.body) return res.json({ error: 'Data is missing', status: false });
 
-            const user = await UserSchema.findOne({ email: req.body.email });
+            const user = await User.findOne({ email: req.body.email });
             if (!user) return res.json({ error: 'User email not found', status: false });
 
             const passwordMatch = await bcrypt.compare(req.body.password, user.password);
@@ -144,7 +144,7 @@ class UserController {
             const { _id } = req.params;
 
             if (!_id) return res.json({ error: 'not found userId' });
-            const user = await UserSchema.findById(_id)
+            const user = await User.findById(_id)
                 .select('name address numberPhone gender email birthDay avatar coverImage')
                 .lean()
                 .exec()
@@ -168,7 +168,7 @@ class UserController {
                 folder: 'avatar',
             });
             const { url: urlAvatar } = result;
-            const user = await UserSchema.findByIdAndUpdate(
+            const user = await User.findByIdAndUpdate(
                 _id,
                 { $set: { avatar: urlAvatar } },
                 { returnDocument: 'after' },
@@ -195,7 +195,7 @@ class UserController {
         const { name, birthDay, address, numberPhone, gender } = req.body;
 
         try {
-            const user = await UserSchema.findByIdAndUpdate(
+            const user = await User.findByIdAndUpdate(
                 _id,
                 {
                     $set: { name, birthDay, address, numberPhone, gender },
@@ -221,7 +221,7 @@ class UserController {
         const { userId } = req.params;
 
         try {
-            const introduce = await UserSchema.findByIdAndUpdate(
+            const introduce = await User.findByIdAndUpdate(
                 userId,
                 { $set: { introduce: req.body } },
                 { returnDocument: 'after' },
@@ -247,7 +247,7 @@ class UserController {
         const { userId } = req.params;
 
         try {
-            const introduce = await UserSchema.findById(userId, 'introduce')
+            const introduce = await User.findById(userId, 'introduce')
                 .lean()
                 .exec()
                 .catch((error) =>
@@ -278,7 +278,7 @@ class UserController {
             if (!result) return res.status(409).json({ error: 'save cover image fail!!!' });
             const { url } = result;
 
-            const coverImage = await UserSchema.findByIdAndUpdate(
+            const coverImage = await User.findByIdAndUpdate(
                 userId,
                 { $set: { coverImage: url } },
                 { returnDocument: 'after' },
@@ -307,12 +307,12 @@ class UserController {
     async getAllPost(req, res, next) {
         const { userId } = req.params;
 
-        await UserSchema.exists({ _id: userId })
+        await User.exists({ _id: userId })
             .exec()
             .catch((error) => res.status(404).json({ error, message: 'not found user!!!' }));
 
         try {
-            const posts = await UserSchema.findById(userId).populate('posts').lean().exec();
+            const posts = await User.findById(userId).populate('posts').lean().exec();
 
             if (!posts) return res.status(404).json({ error: 'not found posts' });
 

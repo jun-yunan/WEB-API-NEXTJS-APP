@@ -4,10 +4,17 @@ const router = express.Router();
 const productController = require('../app/controllers/ProductController');
 const userController = require('../app/controllers/UserController');
 const PostController = require('../app/controllers/PostController');
+const AuthController = require('../app/controllers/AuthController');
 
 const userAuthenticationMiddleware = require('../app/middleware/userAuthenticationMiddleware');
 const multerUploadMiddleware = require('../app/middleware/multerUploadMiddleware');
 const UserController = require('../app/controllers/UserController');
+
+//AUTH
+
+router.post('/auth/login', AuthController.login);
+router.post('/auth/test', AuthController.test);
+router.post('/auth/refresh-token', AuthController.refreshToken);
 
 //  USER
 router.get('/getAllUser', userAuthenticationMiddleware, userController.getAllUser);
@@ -49,6 +56,14 @@ router.post(
     userAuthenticationMiddleware,
     multerUploadMiddleware.single('image'),
     PostController.createPost,
+);
+
+router.get('/users/:userId/posts/:postId', userAuthenticationMiddleware, PostController.getPostById);
+router.post(
+    '/users/:userId/posts/:postId',
+    userAuthenticationMiddleware,
+    multerUploadMiddleware.single('image'),
+    PostController.updatePost,
 );
 
 router.get('/users/:_id/posts', userAuthenticationMiddleware, PostController.getPosts);
